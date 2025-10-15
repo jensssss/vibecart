@@ -1,4 +1,4 @@
-// components/Navbar.tsx
+// components/Navbar.tsx (Updated)
 
 'use client';
 
@@ -10,7 +10,6 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // 'loading' status is when NextAuth is checking the session
   if (status === 'loading') {
     return (
         <header className="bg-white shadow-sm">
@@ -31,55 +30,39 @@ export default function Navbar() {
         <div className="flex items-center space-x-4">
           {session ? (
             // Logged-in user view
-            <div className="relative">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="flex items-center space-x-2"
-              >
-                <span className="font-medium">{session.user?.name}</span>
-                {/* Simple avatar placeholder */}
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {session.user?.name?.charAt(0).toUpperCase()}
-                </div>
-              </button>
-              {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Profile
-                  </Link>
-                   <Link
-                    href="/orders"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    My Orders
-                  </Link>
-                  <button
-                    onClick={() => signOut({ callbackUrl: '/login' })}
-                    className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
+            <div className="flex items-center space-x-4">
+              {/* --- NEW: CART ICON LINK --- */}
+              <Link href="/cart" className="text-gray-600 hover:text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </Link>
+              {/* --- END NEW --- */}
+
+              <div className="relative">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="flex items-center space-x-2"
+                >
+                  <span className="font-medium">{session.user?.name}</span>
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {session.user?.name?.charAt(0).toUpperCase()}
+                  </div>
+                </button>
+                {isMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                    <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</Link>
+                    <Link href="/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Orders</Link>
+                    <button onClick={() => signOut({ callbackUrl: '/login' })} className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             // Guest view
             <>
-              <Link
-                href="/login"
-                className="text-gray-600 hover:text-blue-600"
-              >
-                Log In
-              </Link>
-              <Link
-                href="/register"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-              >
-                Sign Up
-              </Link>
+              <Link href="/login" className="text-gray-600 hover:text-blue-600">Log In</Link>
+              <Link href="/register" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Sign Up</Link>
             </>
           )}
         </div>

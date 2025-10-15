@@ -1,34 +1,53 @@
-import CategoryCard from "@/components/CategoryCard";
-import ProductCard from "@/components/ProductCard";
+// app/page.tsx (Corrected)
+'use client';
+
+import { useEffect, useState } from 'react';
+import ProductCard from '@/components/ProductCard';
+
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl?: string | null;
+};
 
 export default function HomePage() {
-  const categories = ["Electronics", "Fashion", "Home", "Toys", "Beauty"];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/products');
+        if (!res.ok) {
+          throw new Error('Failed to fetch');
+        }
+        const data = await res.json();
+        setProducts(data);
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
-    <div className="max-w-7xl mx-auto mt-6">
-      {/* Hero Section */}
-      <section className="text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2 text-blue-600">
-          Shop the Vibe ✨
-        </h1>
-        <p className="text-gray-600">
-          Discover products from sellers across Indonesia.
-        </p>
-      </section>
-
-      {/* Category Section */}
-      <section className="flex flex-wrap justify-center gap-3 mb-10">
-        {categories.map((cat) => (
-          <CategoryCard key={cat} name={cat} />
-        ))}
-      </section>
-
-      {/* Product Feed */}
-      <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <ProductCard key={i} />
-        ))}
-      </section>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-8 text-center">Featured Products</h1>
+      
+      {isLoading ? (
+        <p className="text-center">Loading products...</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {/* THE FIX IS HERE ↓ */}
+          {products?.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
