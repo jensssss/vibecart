@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ENUMS
+enum Role {
+  user
+  seller
+  admin
+}
+
+enum OrderStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum TransactionType {
+  TOPUP
+  PURCHASE
+}
+
+// MODELS
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  passwordHash  String // Renamed from 'password' for clarity
+  role          Role     @default(user)
+  walletBalance Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  products           Product[]
+  ordersAsBuyer      Order[]           @relation("BuyerOrders")
+  ordersAsSeller     Order[]           @relation("SellerOrders")
+  addresses          Address[]
+  reviews            Review[]
+  walletTransactions WalletTransaction[]
+  cartItems          CartItem[]
+
+  @@map("users")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       Decimal  @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  category    String // For MVP, simple string. Can be a relation later.
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  sellerId String
+  seller   User   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  orderItems OrderItem[]
+  reviews    Review[]
+  cartItems  CartItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  totalAmount Decimal     @db.Decimal(12, 2)
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  buyerId String
+  buyer   User   @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Restrict)
+
+  sellerId String // Denormalized for easier querying of orders per seller
+  seller   User   @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: Restrict)
+
+  items   OrderItem[]
+  address Address     @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  addressId String
+
+  @@map("orders")
+}
+
+model OrderItem {
+  quantity Int
+  price    Decimal @db.Decimal(10, 2) // Price at the time of purchase
+
+  // Relations
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@id([orderId, productId]) // Composite primary key
+  @@map("order_items")
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  street     String
+  city       String
+  province   String
+  postalCode String
+  isDefault  Boolean  @default(false)
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("addresses")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int // e.g., 1 to 5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model WalletTransaction {
+  id        String          @id @default(uuid())
+  amount    Decimal         @db.Decimal(12, 2)
+  type      TransactionType
+  createdAt DateTime        @default(now())
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallet_transactions")
+}
+
+// We need a Cart model to persist the cart in the DB
+model CartItem {
+  id        String   @id @default(uuid())
+  quantity  Int
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, productId]) // A user can only have one entry for a specific product
+  @@map("cart_items")
+}
