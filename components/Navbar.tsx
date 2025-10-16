@@ -51,12 +51,26 @@ export default function Navbar() {
                 </button>
                 {isMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
-                    {/* --- NEW: Conditional Seller Link --- */}
+                    {/* --- NEW: Conditional Admin Links --- */}
+                    {session.user.role === 'admin' && (
+                       <>
+                        <Link href="/admin/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          Admin Dashboard
+                        </Link>
+                        <Link href="/admin/users" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          Manage Users
+                        </Link>
+                       </>
+                    )}
+
+                    {/* --- Conditional Seller Link --- */}
                     {session.user.role === 'seller' && (
                        <Link href="/seller/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                          Seller Dashboard
                        </Link>
                     )}
+
+                    {/* --- Standard User Links --- */}
                     <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</Link>
                     <Link href="/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Orders</Link>
                     <button onClick={() => signOut({ callbackUrl: '/login' })} className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
