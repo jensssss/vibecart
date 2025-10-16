@@ -1,58 +1,83 @@
 // prisma/seed.ts
 
 import { PrismaClient, Role } from '@prisma/client';
+import { faker } from '@faker-js/faker';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Start seeding...');
+  console.log('🚀 Starting advanced seeding...');
 
-  // 1. Create two seller accounts
-  const passwordHash = await bcrypt.hash('password123', 10);
+  // --- 1. Clean Slate ---
+  // For safety, let's not delete the main admin account if it exists
+  const adminEmail = 'your-admin-email@example.com'; // ⚠️ IMPORTANT: Change this to your admin email!
 
-  const seller1 = await prisma.user.create({
-    data: {
-      name: 'Gadget Grove',
-      email: 'seller1@vibecart.com',
-      passwordHash,
-      role: Role.seller,
+  console.log('🧹 Clearing old products and non-admin users...');
+  await prisma.product.deleteMany({});
+  await prisma.user.deleteMany({
+    where: {
+      email: {
+        not: adminEmail,
+      },
     },
   });
 
-  const seller2 = await prisma.user.create({
-    data: {
-      name: 'Fashion Forward',
-      email: 'seller2@vibecart.com',
-      passwordHash,
-      role: Role.seller,
-    },
-  });
+  const passwordHash = await bcrypt.hash('password123', 10); // Generic password for all seeded users
 
-  console.log('Created sellers:', { seller1, seller2 });
+  // --- 2. Create Sellers and Their Products ---
+  console.log('Creating 5 sellers with products...');
+  for (let i = 0; i < 5; i++) {
+    const sellerName = faker.company.name();
+    const seller = await prisma.user.create({
+      data: {
+        name: sellerName,
+        email: faker.internet.email({ firstName: sellerName.split(' ')[0] }).toLowerCase(),
+        passwordHash,
+        role: Role.seller,
+        walletBalance: faker.finance.amount({ min: 1000000, max: 5000000, dec: 0 }),
+      },
+    });
 
-  // 2. Create some products for them
-  const products = [
-    { name: 'VibePod Max', description: 'Premium wireless headphones', price: 349.99, stock: 50, category: 'Electronics', imageUrl: 'https://via.placeholder.com/300', sellerId: seller1.id },
-    { name: 'Quantum Laptop', description: 'Ultra-thin and powerful', price: 1299.99, stock: 25, category: 'Electronics', imageUrl: 'https://via.placeholder.com/300', sellerId: seller1.id },
-    { name: 'Minimalist Tee', description: '100% organic cotton t-shirt', price: 29.99, stock: 200, category: 'Apparel', imageUrl: 'https://via.placeholder.com/300', sellerId: seller2.id },
-    { name: 'Urban Explorer Jacket', description: 'Waterproof and stylish', price: 149.99, stock: 75, category: 'Apparel', imageUrl: 'https://via.placeholder.com/300', sellerId: seller2.id },
-    { name: 'Smart Hydro Flask', description: 'Keeps drinks cold for 24 hours', price: 39.99, stock: 150, category: 'Accessories', imageUrl: 'https://via.placeholder.com/300', sellerId: seller1.id },
-    { name: 'Classic Leather Watch', description: 'Timeless design, modern feel', price: 199.99, stock: 60, category: 'Accessories', imageUrl: 'https://via.placeholder.com/300', sellerId: seller2.id },
-  ];
+    // Create 3 to 7 products for each seller
+    const productCount = faker.number.int({ min: 3, max: 7 });
+    for (let j = 0; j < productCount; j++) {
+      await prisma.product.create({
+        data: {
+          name: faker.commerce.productName(),
+          description: faker.commerce.productDescription(),
+          price: faker.commerce.price({ min: 50000, max: 2000000, dec: 0 }),
+          stock: faker.number.int({ min: 10, max: 100 }),
+          category: faker.commerce.department(),
+          imageUrl: `https://picsum.photos/seed/${faker.string.uuid()}/400/300`, // Random placeholder image
+          sellerId: seller.id, // Link product to the seller
+        },
+      });
+    }
+  }
 
-  for (const product of products) {
-    await prisma.product.create({
-      data: product,
+  // --- 3. Create Buyers ---
+  console.log('Creating 10 buyers...');
+  for (let i = 0; i < 10; i++) {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    await prisma.user.create({
+      data: {
+        name: `${firstName} ${lastName}`,
+        email: faker.internet.email({ firstName, lastName }).toLowerCase(),
+        passwordHash,
+        role: Role.user,
+        walletBalance: faker.finance.amount({ min: 500000, max: 3000000, dec: 0 }),
+      },
     });
   }
 
-  console.log('Seeding finished.');
+  console.log('✅ Seeding finished successfully!');
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error('❌ An error occurred during seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

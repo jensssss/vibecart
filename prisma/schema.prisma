@@ -35,7 +35,7 @@ model User {
   id            String   @id @default(uuid())
   name          String
   email         String   @unique
-  passwordHash  String // Renamed from 'password' for clarity
+  passwordHash  String
   role          Role     @default(user)
   walletBalance Decimal  @default(0) @db.Decimal(12, 2)
   createdAt     DateTime @default(now())
@@ -59,7 +59,7 @@ model Product {
   description String
   price       Decimal  @db.Decimal(10, 2)
   stock       Int      @default(0)
-  category    String // For MVP, simple string. Can be a relation later.
+  category    String
   imageUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -84,13 +84,13 @@ model Order {
 
   // Relations
   buyerId String
-  buyer   User   @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Restrict)
+  buyer   User   @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade) // <-- THE FIX IS HERE
 
-  sellerId String // Denormalized for easier querying of orders per seller
+  sellerId String
   seller   User   @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: Restrict)
 
-  items   OrderItem[]
-  address Address     @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  items     OrderItem[]
+  address   Address     @relation(fields: [addressId], references: [id], onDelete: Restrict)
   addressId String
 
   @@map("orders")
@@ -98,7 +98,7 @@ model Order {
 
 model OrderItem {
   quantity Int
-  price    Decimal @db.Decimal(10, 2) // Price at the time of purchase
+  price    Decimal @db.Decimal(10, 2)
 
   // Relations
   orderId   String
@@ -106,7 +106,7 @@ model OrderItem {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 
-  @@id([orderId, productId]) // Composite primary key
+  @@id([orderId, productId])
   @@map("order_items")
 }
 
@@ -117,8 +117,8 @@ model Address {
   province   String
   postalCode String
   isDefault  Boolean  @default(false)
-  createdAt  DateTime @default(now()) // <-- ADD THIS LINE
-  updatedAt  DateTime @updatedAt     // <-- ADD THIS LINE
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
   userId String
@@ -130,7 +130,7 @@ model Address {
 
 model Review {
   id        String   @id @default(uuid())
-  rating    Int // e.g., 1 to 5
+  rating    Int
   comment   String?
   createdAt DateTime @default(now())
 
@@ -156,7 +156,6 @@ model WalletTransaction {
   @@map("wallet_transactions")
 }
 
-// We need a Cart model to persist the cart in the DB
 model CartItem {
   id        String   @id @default(uuid())
   quantity  Int
@@ -167,6 +166,6 @@ model CartItem {
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   
-  @@unique([userId, productId]) // A user can only have one entry for a specific product
+  @@unique([userId, productId])
   @@map("cart_items")
 }
