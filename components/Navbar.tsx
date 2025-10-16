@@ -1,14 +1,22 @@
-// components/Navbar.tsx (Reverted)
+// components/Navbar.tsx (Updated)
 
 'use client';
 
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useRef } from 'react'; // <-- Import useRef
+import { useOnClickOutside } from '@/lib/hooks/useOnClickOutside'; // <-- Import our new hook
 
 export default function Navbar() {
   const { data: session, status } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // --- NEW: Create a ref for the dropdown menu ---
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // --- NEW: Use the hook to close the menu on outside click ---
+  useOnClickOutside(menuRef, () => setIsMenuOpen(false));
+
 
   if (status === 'loading') {
     return (
@@ -35,9 +43,10 @@ export default function Navbar() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </Link>
-              <div className="relative">
+              {/* --- NEW: Attach the ref to the dropdown container --- */}
+              <div className="relative" ref={menuRef}>
                 <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  onClick={() => setIsMenuOpen(!isMenuOpen)} // Toggle the menu
                   className="flex items-center space-x-2"
                 >
                   <span className="font-medium">{session.user?.name}</span>
