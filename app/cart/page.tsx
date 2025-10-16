@@ -1,4 +1,4 @@
-// app/cart/page.tsx
+// app/cart/page.tsx (Corrected)
 
 'use client';
 
@@ -117,9 +117,13 @@ export default function CartPage() {
               <span>Total</span>
               <span>{formatPrice(totalPrice)}</span>
             </div>
-            <button className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700">
+            {/* --- THIS IS THE FIX --- */}
+            <Link 
+              href="/checkout" 
+              className="block text-center w-full mt-6 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
+            >
               Proceed to Checkout
-            </button>
+            </Link>
           </div>
         </div>
       </div>
