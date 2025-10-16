@@ -7,6 +7,34 @@ import { authOptions } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
+// --- NEW: This function gets all orders for the logged-in user ---
+export async function GET(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user?.id) {
+    return new NextResponse('Unauthorized', { status: 401 });
+  }
+
+  try {
+    const orders = await prisma.order.findMany({
+      where: { buyerId: session.user.id },
+      include: {
+        items: {
+          include: {
+            product: true, // Include details for each product in the order
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return NextResponse.json(orders);
+  } catch (error) {
+    console.error('FETCH_ORDERS_ERROR:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.id) {
