@@ -117,6 +117,8 @@ model Address {
   province   String
   postalCode String
   isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now()) // <-- ADD THIS LINE
+  updatedAt  DateTime @updatedAt     // <-- ADD THIS LINE
 
   // Relations
   userId String
