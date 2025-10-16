@@ -86,8 +86,33 @@ export default function CheckoutPage() {
   }, [cartItems]);
 
   const handlePlaceOrder = async () => {
-    // We will build this logic in the next step!
-    alert('Order placement logic is not yet implemented.');
+      if (!selectedAddress) {
+        setError('Please select a shipping address.');
+        return;
+      }
+      setError('');
+      setIsLoading(true); // Use the same loading state
+
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ addressId: selectedAddress }),
+        });
+
+        if (res.ok) {
+          // Order placed successfully!
+          alert('Order placed successfully!');
+          router.push('/orders'); // Redirect to order history page
+        } else {
+          const errorData = await res.json();
+          setError(errorData.message || 'Failed to place order.');
+        }
+      } catch (err) {
+        setError('An unexpected error occurred. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
   };
 
   if (isLoading || status === 'loading') {
